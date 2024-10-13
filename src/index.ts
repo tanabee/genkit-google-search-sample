@@ -13,15 +13,15 @@ configureGenkit({
   enableTracingAndMetrics: true,
 });
 
-export const menuSuggestionFlow = defineFlow(
+export const mainFlow = defineFlow(
   {
-    name: 'menuSuggestionFlow',
+    name: 'mainFlow',
     inputSchema: z.string(),
     outputSchema: z.string(),
   },
-  async (subject) => {
+  async (prompt) => {
     const llmResponse = await generate({
-      prompt: `Suggest an item for the menu of a ${subject} themed restaurant`,
+      prompt,
       model: gemini15Flash,
       config: {
         temperature: 1,
