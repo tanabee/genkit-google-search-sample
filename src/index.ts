@@ -25,6 +25,7 @@ export const mainFlow = defineFlow(
       model: gemini15Flash,
       config: {
         temperature: 1,
+        googleSearchRetrieval: {}
       },
     });
     return llmResponse.text();
