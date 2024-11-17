@@ -26,38 +26,50 @@ gcloud auth application-default login
 
 ## Genkit プロジェクトの初期化
 
-まず、Genkit プロジェクトの初期化を行います。Genkit のバージョンを 0.5.9 以上にする必要があるので、genkit のインストールから行います。Google 検索は Vertex AI の機能を用いるので `model provider` として `Google Cloud Vertext AI` を選択します。
+まず、Genkit プロジェクトの初期化を行います。
 
 ```sh
-% npm i -g genkit
-% mkdir genkit-google-search-sample
-% cd genkit-google-search-sample
+% npm init -y
+% npm i -D genkit-cli
+% npm i genkit @genkit-ai/googleai @genkit-ai/vertexai
+% mkdir src && touch src/index.ts
+```
 
-% genkit init 
-? Select a runtime to initialize a Genkit project: Node.js
-? Select a model provider: Google Cloud Vertex AI
-? Would you like to generate a sample flow? (Y/n) Y
-? Would you like to generate a sample flow? Yes
-✔ Successfully generated sample file (src/index.ts)
-Run the following command to enable Vertex AI in your Google Cloud project:
+以下の初期設定のコードを `src/index.ts` に貼り付けます。
 
-  gcloud services enable aiplatform.googleapis.com
+```typescript
+import { genkit, z } from 'genkit';
+import { vertexAI } from '@genkit-ai/vertexai';
+import { gemini15Flash } from '@genkit-ai/vertexai';
 
-Genkit successfully initialized.
+const ai = genkit({
+  model: gemini15Flash,
+  plugins: [vertexAI({ location: 'us-central1' })],
+});
+
+export const mainFlow = ai.defineFlow(
+  {
+    name: 'mainFlow',
+    inputSchema: z.string(),
+    outputSchema: z.string(),
+  },
+  async (prompt) => {
+    const { text } = await ai.generate(prompt);
+    return text;
+  }
+);
+
+ai.startFlowServer({ flows: [mainFlow] });
 ```
 
 ## Google 検索の有効化
 
-generate メソッドの config に `googleSearchRetrieval: {}` を足すだけで有効化できます。合わせて `prompt` は入力テキストをそのまま渡すように変更します。
+Google Search を有効化するには、以下のコードのように gemini15Flash モデルに対して withConfig で googleSearchRetrieval を指定します。
 
 ```typescript
-const llmResponse = await generate({
-  model: gemini15Flash,
-  prompt,
-  config: {
-    temperature: 1,
-    googleSearchRetrieval: {}, // Add this line
-  },
+const ai = genkit({
+  model: gemini15Flash.withConfig({ googleSearchRetrieval: {}}),
+  plugins: [vertexAI({ location: 'us-central1' })],
 });
 ```
 
