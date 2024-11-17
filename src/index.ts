@@ -1,35 +1,22 @@
-import * as z from 'zod';
-import { generate } from '@genkit-ai/ai';
-import { configureGenkit } from '@genkit-ai/core';
-import { defineFlow, startFlowsServer } from '@genkit-ai/flow';
+import { genkit, z } from 'genkit';
 import { vertexAI } from '@genkit-ai/vertexai';
 import { gemini15Flash } from '@genkit-ai/vertexai';
 
-configureGenkit({
-  plugins: [
-    vertexAI({ location: 'us-central1' }),
-  ],
-  logLevel: 'debug',
-  enableTracingAndMetrics: true,
+const ai = genkit({
+  model: gemini15Flash.withConfig({ googleSearchRetrieval: {}}),
+  plugins: [vertexAI({ location: 'us-central1' })],
 });
 
-export const mainFlow = defineFlow(
+export const mainFlow = ai.defineFlow(
   {
     name: 'mainFlow',
     inputSchema: z.string(),
     outputSchema: z.string(),
   },
   async (prompt) => {
-    const llmResponse = await generate({
-      prompt,
-      model: gemini15Flash,
-      config: {
-        temperature: 1,
-        googleSearchRetrieval: {}
-      },
-    });
-    return llmResponse.text();
+    const { text } = await ai.generate(prompt);
+    return text;
   }
 );
 
-startFlowsServer();
+ai.startFlowServer({ flows: [mainFlow] });
